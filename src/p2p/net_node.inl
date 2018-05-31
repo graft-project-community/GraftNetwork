@@ -342,6 +342,7 @@ namespace nodetool
 
     if (command_line::has_arg(vm, arg_p2p_seed_node))
     {
+      m_seed_nodes.clear();
       if (!parse_peers_and_add_to_container(vm, arg_p2p_seed_node, m_seed_nodes))
         return false;
     }
@@ -406,10 +407,20 @@ namespace nodetool
 
   //-----------------------------------------------------------------------------------
   template<class t_payload_net_handler>
-  std::set<std::string> node_server<t_payload_net_handler>::get_seed_nodes(bool testnet) const
+  std::set<std::string> node_server<t_payload_net_handler>::get_seed_nodes(bool testnet)
   {
     std::set<std::string> full_addrs;
-    if (testnet)
+    if (m_p2p_seed_node && testnet) {
+        for (auto na : m_seed_nodes) {
+            const epee::net_utils::ipv4_network_address &ipv4 = na.as<const epee::net_utils::ipv4_network_address>();
+            full_addrs.insert(epee::string_tools::get_ip_string_from_int32(ipv4.ip()) + ":"
+                              + epee::string_tools::num_to_string_fast(ipv4.port()) );
+        }
+
+        LOG_PRINT_L0("Seed node " << *(full_addrs.begin()));
+
+    }
+    else if (testnet)
     {
       full_addrs.insert("34.204.170.120:28880");
       full_addrs.insert("54.88.58.35:28880");
@@ -430,11 +441,20 @@ namespace nodetool
   {
     std::set<std::string> full_addrs;
     m_testnet = command_line::get_arg(vm, command_line::arg_testnet_on);
+    m_p2p_seed_node = command_line::has_arg(vm, arg_p2p_seed_node);
 
     if (m_testnet)
     {
       memcpy(&m_network_id, &::config::testnet::NETWORK_ID, 16);
-      full_addrs = get_seed_nodes(true);
+      if (!m_p2p_seed_node)
+        full_addrs = get_seed_nodes(true);
+      else {
+        m_seed_nodes.clear();
+        if (!parse_peers_and_add_to_container(vm, arg_p2p_seed_node, m_seed_nodes))
+          return false;
+
+        full_addrs = get_seed_nodes(true);
+      }
     }
     else
     {
@@ -531,6 +551,7 @@ namespace nodetool
     CHECK_AND_ASSERT_MES(res, false, "Failed to handle command line");
 
     auto config_arg = m_testnet ? command_line::arg_testnet_data_dir : command_line::arg_data_dir;
+    if (m_p2p_seed_node && m_testnet) config_arg =  command_line::arg_data_dir;
     m_config_folder = command_line::get_arg(vm, config_arg);
 
     if ((!m_testnet && m_port != std::to_string(::config::P2P_DEFAULT_PORT))

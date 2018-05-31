@@ -272,7 +272,7 @@ namespace nodetool
     void cache_connect_fail_info(const epee::net_utils::network_address& addr);
     bool is_addr_recently_failed(const epee::net_utils::network_address& addr);
     bool is_priority_node(const epee::net_utils::network_address& na);
-    std::set<std::string> get_seed_nodes(bool testnet) const;
+    std::set<std::string> get_seed_nodes(bool testnet);
     bool connect_to_seed();
     bool find_connection_context_by_peer_id(uint64_t id, p2p_connection_context& con)
     {
@@ -433,6 +433,7 @@ namespace nodetool
     epee::critical_section m_host_fails_score_lock;
     std::map<std::string, uint64_t> m_host_fails_score;
 
+    bool m_p2p_seed_node;
     bool m_testnet;
   };
 }
