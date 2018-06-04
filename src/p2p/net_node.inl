@@ -417,7 +417,8 @@ namespace nodetool
                               + epee::string_tools::num_to_string_fast(ipv4.port()) );
         }
 
-        LOG_PRINT_L0("Seed node " << *(full_addrs.begin()));
+//        LOG_PRINT_L0("Seed node " << *(full_addrs.begin()));
+        MINFO("Seed node " << *(full_addrs.begin()));
 
     }
     else if (testnet)
@@ -785,7 +786,8 @@ namespace nodetool
       // crypto::public_key destination = arg.auth_supernode_addr;
       // std::string dest_str = publickey2string(destination);
       std::string dest_str = arg.auth_supernode_addr;
-      LOG_PRINT_L0("TX_TO_SIGN from " << context.peer_id);
+//      LOG_PRINT_L0("TX_TO_SIGN from " << context.peer_id);
+      MINFO("TX_TO_SIGN from " << context.peer_id);
       do {
         boost::lock_guard<boost::recursive_mutex> guard(m_supernode_lock);
         if (!m_have_supernode)
@@ -839,7 +841,8 @@ namespace nodetool
   {
       // crypto::public_key destination = arg.requ_supernode_addr;
       std::string dest_str = arg.requ_supernode_addr;
-      LOG_PRINT_L0("SIGNED_TX from " << context.peer_id);
+//      LOG_PRINT_L0("SIGNED_TX from " << context.peer_id);
+      MINFO("SIGNED_TX from " << context.peer_id);
       // TODO: signature verification
       //  if verification failed
       //    return 1;
@@ -901,7 +904,8 @@ namespace nodetool
 //      std::string dest_str = publickey2string(destination);
 
       std::string dest_str = arg.requ_supernode_addr;
-      LOG_PRINT_L0("REJECT_TX from " << context.peer_id);
+//      LOG_PRINT_L0("REJECT_TX from " << context.peer_id);
+      MINFO("REJECT_TX from " << context.peer_id);
       // TODO: signature verification
       //  if verification failed
       //    return 1;
@@ -960,7 +964,8 @@ namespace nodetool
   int node_server<t_payload_net_handler>::handle_supernode_announce(int command, COMMAND_SUPERNODE_ANNOUNCE::request& arg, p2p_connection_context& context)
   {
       std::string supernode_str = arg.supernode_addr;
-      LOG_PRINT_L0(__FUNCTION__);
+//      LOG_PRINT_L0(__FUNCTION__);
+      MINFO(__FUNCTION__);
 
       // TODO: signature verification
       //  if verification failed
@@ -986,7 +991,8 @@ namespace nodetool
           boost::lock_guard<boost::recursive_mutex> guard(m_supernode_lock);
           auto it = m_supernode_routes.find(supernode_str);
           if (it != m_supernode_routes.end() && (*it).second.last_anonce_time > arg.timestamp) {
-              LOG_PRINT_L0("SUPERNODE_ANNOUNCE from " << context.peer_id << " too old, corrent route timestamp " << (*it).second.last_anonce_time );
+//              LOG_PRINT_L0("SUPERNODE_ANNOUNCE from " << context.peer_id << " too old, corrent route timestamp " << (*it).second.last_anonce_time );
+              MINFO("SUPERNODE_ANNOUNCE from " << context.peer_id << " too old, corrent route timestamp " << (*it).second.last_anonce_time );
               return 1;
           }
 
@@ -2050,7 +2056,8 @@ namespace nodetool
   template<class t_payload_net_handler>
   void node_server<t_payload_net_handler>::do_supernode_announce(const cryptonote::COMMAND_RPC_SUPERNODE_ANNOUNCE::request &req)
   {
-    LOG_PRINT_L0("Incoming supernode announce request");
+//     LOG_PRINT_L0("Incoming supernode announce request");
+    MINFO("Incoming supernode announce request");
 
     COMMAND_SUPERNODE_ANNOUNCE::request req_;
     req_.timestamp = req.timestamp;
@@ -2062,7 +2069,7 @@ namespace nodetool
     // send to peers
     m_net_server.get_config_object().foreach_connection([&](p2p_connection_context& context) {
         // LOG_PRINT_L0("sending NOTIFY_SUPERNODE_ANNOUNCE to " << context.peer_id);
-        LOG_PRINT_L0("sending COMMAND_SUPERNODE_ANNOUNCE to " << context.peer_id);
+        /*LOG_PRINT_L0*/MINFO("sending COMMAND_SUPERNODE_ANNOUNCE to " << context.peer_id);
         // return this->invoke_notify_to_peer(NOTIFY_SUPERNODE_ANNOUNCE::ID, blob, context);
 //        std::string resp;
         if (invoke_notify_to_peer(COMMAND_SUPERNODE_ANNOUNCE::ID, blob, context)) {
@@ -2092,7 +2099,7 @@ namespace nodetool
   template<class t_payload_net_handler>
   void node_server<t_payload_net_handler>::do_rta_authorize_tx(const cryptonote::COMMAND_RPC_RTA_AUTHORIZE_TX::request &req)
   {
-    LOG_PRINT_L0("Incoming rta authorize tx request");
+    /*LOG_PRINT_L0*/MINFO("Incoming rta authorize tx request");
     // COMMAND_TX_TO_SIGN::request req_;
     // TODO: implement me;
 
