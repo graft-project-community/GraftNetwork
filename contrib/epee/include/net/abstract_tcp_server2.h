@@ -35,6 +35,7 @@
 #ifndef _ABSTRACT_TCP_SERVER2_H_ 
 #define _ABSTRACT_TCP_SERVER2_H_ 
 
+#include "async_state_machine.h"
 
 #include <boost/asio.hpp>
 #include <string>
