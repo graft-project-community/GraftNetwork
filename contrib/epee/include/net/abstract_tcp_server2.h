@@ -68,6 +68,8 @@ namespace epee
 namespace net_utils
 {
 
+  using async_state_machine=cblp::async_callback_state_machine;
+
   struct i_connection_filter
   {
     virtual bool is_remote_host_allowed(const epee::net_utils::network_address &address)=0;
@@ -313,6 +315,58 @@ namespace net_utils
     std::deque<std::pair<boost::system_time, connection_ptr>> connections_;
 
   }; // class <>boosted_tcp_server
+
+  template<class t_protocol_handler>
+  struct do_send_state_machine : public async_state_machine
+  {
+    do_send_state_machine(connection<t_protocol_handler>& conn
+                          , const void* ptr
+                          , size_t cb
+                          , std::shared_ptr<async_state_machine> caller
+                          , int64_t timeout)
+      : conn(conn)
+      , ptr(ptr)
+      , size(cb)
+      , caller(caller)
+      , timeout(timeout)
+    {
+    }
+
+    struct on_send : i_task
+    {
+      on_send()
+      {}
+
+      /*virtual*/ void exec()
+      {
+      }
+
+      void * ptr;
+      size_t size;
+    };
+
+
+    struct finalize : i_task
+    {
+      finalize(bool result, std::shared_ptr<async_state_machine> caller)
+          : result(result)
+          , caller(caller)
+      {}
+      /*virtual*/ void exec()
+      {
+      }
+
+      bool result;
+      std::shared_ptr<async_state_machine> caller;
+    };
+
+    connection<t_protocol_handler>& conn;
+    const void* ptr;
+    size_t size;
+    std::shared_ptr<async_state_machine> caller;
+
+    int64_t timeout;
+  }; // struct do_send_state_machine
 
 
 } // namespace

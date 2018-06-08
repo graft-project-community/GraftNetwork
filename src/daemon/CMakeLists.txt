@@ -78,7 +78,6 @@ set(daemon_private_headers
   ../../contrib/epee/include/md5_l.inl
   ../../contrib/epee/include/net/levin_client_async.inl
   ../../contrib/epee/include/net/smtp.inl
-  ../../contrib/epee/include/net/abstract_tcp_server_cp.inl
   ../../contrib/epee/include/net/abstract_tcp_server2.inl
   ../../contrib/epee/include/net/levin_client.inl
   ../../contrib/epee/include/net/http_protocol_handler.inl

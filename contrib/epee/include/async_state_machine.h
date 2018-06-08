@@ -9,8 +9,7 @@
 #include <boost/bind.hpp>
 #include <boost/thread.hpp>
 
-namespace epee { namespace net {
-
+namespace cblp {
 
 struct async_callback_state_machine : public std::enable_shared_from_this<async_callback_state_machine>
 {
@@ -213,6 +212,6 @@ public:
 };
 
 
-}} // namespace epee { namespace net {
+} // namespace cblp
 
 #endif //  ASYNC_STATE_MACHINE_H

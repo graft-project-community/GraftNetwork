@@ -51,11 +51,17 @@ namespace epee
 namespace levin
 {
 
+using async_state_machine=cblp::async_callback_state_machine;
+
+
 /************************************************************************/
 /*                                                                      */
 /************************************************************************/
 template<class t_connection_context>
 class async_protocol_handler;
+
+template<class t_arg, class t_result, class t_transport, class t_connection_context>
+  struct invoke_remote_command2_state_machine;
 
 template<class t_connection_context>
 class async_protocol_handler_config
@@ -68,9 +74,13 @@ class async_protocol_handler_config
   void del_connection(async_protocol_handler<t_connection_context>* pc);
 
   async_protocol_handler<t_connection_context>* find_connection(boost::uuids::uuid connection_id) const;
+public:
   int find_and_lock_connection(boost::uuids::uuid connection_id, async_protocol_handler<t_connection_context>*& aph);
 
   friend class async_protocol_handler<t_connection_context>;
+//  friend template<class t_arg, class t_result, class t_transport, class t_connection_context>
+//  struct invoke_remote_command2_state_machine<class t_arg : public async_state_machine
+
 
 public:
   typedef t_connection_context connection_context;
@@ -104,6 +114,8 @@ public:
 template<class t_connection_context = net_utils::connection_context_base>
 class async_protocol_handler
 {
+//    friend template<class t_arg, class t_result, class t_transport, class T = t_connection_context>  struct invoke_remote_command2_state_machine;
+
 public:
   typedef t_connection_context connection_context;
   typedef async_protocol_handler_config<t_connection_context> config_type;
@@ -867,5 +879,150 @@ bool async_protocol_handler_config<t_connection_context>::request_callback(boost
     return false;
   }
 }
+
+
+template<class t_arg, class t_result, class t_transport, class t_connection_context>
+struct invoke_remote_command2_state_machine : public async_state_machine
+{
+  invoke_remote_command2_state_machine(boost::uuids::uuid conn_id
+                                       , int command
+                                       , const t_arg& out_struct
+                                       , t_transport& transport
+                                       , async_protocol_handler_config<t_connection_context> &config_obj
+                                       , int64_t timeout)
+    : is_valid(true)
+    , conn_id(conn_id)
+    , command(command)
+    , transport(transport)
+    , config_obj(final_callback)
+    , timeout(timeout)
+  {
+      if(!transport.is_connected()) {
+          is_valid = false;
+          return;
+      }
+
+      serialization::portable_storage stg;
+      out_struct.store(stg);
+      stg.store_to_binary(buff_to_send);
+
+      int r = config_obj.find_and_lock_connection(conn_id, aph);
+      if (!r) {
+          is_valid = false;
+          return;
+      }
+//      return LEVIN_OK == r ? aph->invoke(command, in_buff, buff_out) : r;
+  }
+
+  struct send_command : i_task
+  {
+      send_command()
+      {}
+
+      /*virtual*/ void exec()
+      {
+//          misc_utils::auto_scope_leave_caller scope_exit_handler = misc_utils::create_scope_leave_handler(
+//            boost::bind(&async_protocol_handler::finish_outer_call, this));
+
+//          do
+//          {
+//            if(m_deletion_initiated)
+//            {
+//              err_code = LEVIN_ERROR_CONNECTION_DESTROYED;
+//              break;
+//            }
+
+//            CRITICAL_REGION_LOCAL(m_call_lock);
+
+//            if(m_deletion_initiated)
+//            {
+//              err_code = LEVIN_ERROR_CONNECTION_DESTROYED;
+//              break;
+//            }
+
+//            bucket_head2 head = {0};
+//            head.m_signature = LEVIN_SIGNATURE;
+//            head.m_cb = in_buff.size();
+//            head.m_have_to_return_data = true;
+
+//            head.m_flags = LEVIN_PACKET_REQUEST;
+//            head.m_command = command;
+//            head.m_protocol_version = LEVIN_PROTOCOL_VER_1;
+
+//            boost::interprocess::ipcdetail::atomic_write32(&m_invoke_buf_ready, 0);
+//            CRITICAL_REGION_BEGIN(m_send_lock);
+//            CRITICAL_REGION_LOCAL1(m_invoke_response_handlers_lock);
+//            if(!m_pservice_endpoint->do_send(&head, sizeof(head)))
+//            {
+//              LOG_ERROR_CC(m_connection_context, "Failed to do_send");
+//              err_code = LEVIN_ERROR_CONNECTION;
+//              break;
+//            }
+
+//            if(!m_pservice_endpoint->do_send(in_buff.data(), (int)in_buff.size()))
+//            {
+//              LOG_ERROR_CC(m_connection_context, "Failed to do_send");
+//              err_code = LEVIN_ERROR_CONNECTION;
+//              break;
+//            }
+
+//            if(!add_invoke_response_handler(cb, timeout, *this, command))
+//            {
+//              err_code = LEVIN_ERROR_CONNECTION_DESTROYED;
+//              break;
+//            }
+//            CRITICAL_REGION_END();
+//          } while (false);
+
+
+      }
+  };
+
+  struct delay : i_task
+  {
+      /*virtual*/ void exec()
+      {
+      }
+  };
+
+  struct wait_for_reply : i_task
+  {
+      /*virtual*/ void exec()
+      {
+      }
+  };
+
+  struct finalize : i_task
+  {
+    finalize(bool ret, t_result& result_struct)//, t_final_callback& caller)
+        : result(ret)
+        , reply(result_struct)
+    {}
+    /*virtual*/ void exec()
+    {
+    }
+
+    bool result;
+    std::shared_ptr<t_result> reply;
+//    t_final_callback final_callback;
+  };
+
+  bool is_valid;
+  boost::uuids::uuid conn_id;
+  int command;
+  std::string buff_to_send;
+  std::string buff_to_recv;
+  std::shared_ptr<t_result> reply;
+  t_transport& transport;
+  async_protocol_handler_config<t_connection_context>& config_obj;
+  int64_t timeout;
+
+  async_protocol_handler<t_connection_context>* aph;
+
+
+};
+
+
+
 }
 }
