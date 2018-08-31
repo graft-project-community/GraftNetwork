@@ -39,6 +39,8 @@
 
 #define MLOG_LOG(x) CINFO(el::base::Writer,el::base::DispatchAction::FileOnlyLog,MONERO_DEFAULT_LOG_CATEGORY) << x
 
+thread_local std::string mlog_current_log_category;
+
 using namespace epee;
 
 static std::string generate_log_filename(const char *base)
@@ -182,6 +184,33 @@ void mlog_set_log(const char *log)
   {
     MERROR("Invalid numerical log level: " << log);
   }
+}
+
+// %locname custom specifier can be used in addition to the Logging Format Specifiers of the Easylogging++
+// %locname similar to %loc but without full path
+//the default format is "%datetime{%Y-%M-%d %H:%m:%s.%g}	%thread	%level	%logger	%loc	%msg"
+void mlog_set_format(const char* format)
+{
+    auto locname = [](const el::LogMessage* lm)-> std::string
+    {
+        std::string s = lm->file();
+#if defined(_WIN32)
+        const char* separators = "/\\";
+#elif defined(__unix__) || defined(__APPLE__)
+        const char separators = '/';
+#endif
+        size_t pos = s.find_last_of(separators);
+        if(pos != std::string::npos)
+        {
+            s = s.substr(pos+1);
+        }
+        return s;
+    };
+    el::Helpers::installCustomFormatSpecifier(el::CustomFormatSpecifier("%locname", locname));
+
+    el::Configurations defaultConf;
+    defaultConf.setGlobally(el::ConfigurationType::Format, format);
+    el::Loggers::reconfigureAllLoggers(defaultConf);
 }
 
 namespace epee
