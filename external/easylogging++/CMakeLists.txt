@@ -34,6 +34,9 @@ SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 find_package(Threads)
 
+message("==> Add -DELPP_SYSLOG")
+add_definitions(-DELPP_SYSLOG)
+
 add_library(easylogging
   easylogging++.cc)
 
