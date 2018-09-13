@@ -27,6 +27,10 @@
 # THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 # Parts of this file are originally copyright (c) 2012-2013 The Cryptonote developers
+
+message("==>> modules/cryptonode CMAKE_SOURCE_DIR = ${CMAKE_SOURCE_DIR}")
+message("==>> modules/cryptonode CMAKE_CURRENT_SOURCE_DIR = ${CMAKE_CURRENT_SOURCE_DIR}")
+
 if (IOS)
     INCLUDE(CmakeLists_IOS.txt)
 endif()
@@ -106,6 +110,8 @@ endif()
 
 set(CMAKE_C_FLAGS_RELEASE "-DNDEBUG ${OPT_FLAGS_RELEASE}")
 set(CMAKE_CXX_FLAGS_RELEASE "-DNDEBUG ${OPT_FLAGS_RELEASE}")
+
+add_definitions(-DELPP_SYSLOG -DMONERO_DEFAULT_LOG_CATEGORY="supernode")
 
 # set this to 0 if per-block checkpoint needs to be disabled
 set(PER_BLOCK_CHECKPOINT 0)

@@ -32,6 +32,21 @@ else()
   add_library(epee STATIC hex.cpp http_auth.cpp mlog.cpp string_tools.cpp memwipe.c async_state_machine.cpp)
 endif()
 
+target_compile_definitions(epee PRIVATE -DELPP_SYSLOG)
+
+message("==>> epee/src CMAKE_SOURCE_DIR = ${CMAKE_SOURCE_DIR}")
+message("==>> epee/src CMAKE_CURRENT_SOURCE_DIR = ${CMAKE_CURRENT_SOURCE_DIR}")
+
+message("==>> epee/src CMAKE_ROOT_SOURCE_DIR = ${CMAKE_ROOT_SOURCE_DIR}")
+
+if(NOT DEFINED CMAKE_ROOT_SOURCE_DIR)
+# CMAKE_ROOT_SOURCE_DIR variable is required, because CMAKE_SOURCE_DIR works well for include like commands and does not for external projects
+    set(CMAKE_ROOT_SOURCE_DIR "${CMAKE_SOURCE_DIR}")
+    message("x==>> epee/src CMAKE_ROOT_SOURCE_DIR = ${CMAKE_ROOT_SOURCE_DIR}")
+endif()
+
+target_compile_definitions(epee PRIVATE CMAKE_ROOT_SOURCE_DIR="\"${CMAKE_ROOT_SOURCE_DIR}\"")
+
 if(HAVE_C11)
 SET_PROPERTY(SOURCE memwipe.c PROPERTY COMPILE_FLAGS -std=c11)
 endif()

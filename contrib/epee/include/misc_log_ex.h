@@ -58,7 +58,7 @@
 #ifdef __cplusplus
 #if __cplusplus >= 201103L
 
-#define MONERO_LOG_CATEGORY mlog_current_log_category.empty()? MONERO_DEFAULT_LOG_CATEGORY : mlog_current_log_category.c_str()
+#define MONERO_LOG_CATEGORY mlog_current_log_category.empty()? MONERO_DEFAULT_LOG_CATEGORY : std::string(mlog_current_log_category.c_str()).c_str()
 
 // Define MONERO_DEFAULT_LOG_CATEGORY in your unit code to direct logging to
 // a category for whole unit. Set mlog_current_log_category to direct logging
@@ -67,23 +67,59 @@
 
 extern thread_local std::string mlog_current_log_category;
 
-#endif
-#endif
+#endif //__cplusplus >= 201103L
+#endif //__cplusplus
 
 #ifndef MONERO_LOG_CATEGORY
 #define MONERO_LOG_CATEGORY MONERO_DEFAULT_LOG_CATEGORY
 #endif
 
+#ifdef ELPP_SYSLOG
+extern bool mlog_syslog;
+//#define CLOGX(LEVEL,...) ((mlog_syslog)? SYSLOG(LEVEL) << " " : CLOG(LEVEL,__VA_ARGS__))
+//#define CLOGX(LEVEL,...) CSYSLOG(LEVEL, MONERO_LOG_CATEGORY)
+#define CLOGX(LEVEL,cat) ((mlog_syslog)? CSYSLOG(LEVEL,cat) : CLOG(LEVEL,cat))
+#else //ELPP_SYSLOG
+#define CLOGX(LEVEL,...) CLOG(LEVEL,__VA_ARGS__)
+#endif //ELPP_SYSLOG
+
+#define MCFATAL(cat,x) CLOGX(FATAL,cat) << x
+#define MCERROR(cat,x) CLOGX(ERROR,cat) << x
+#define MCWARNING(cat,x) CLOGX(WARNING,cat) << x
+#define MCINFO(cat,x) CLOGX(INFO,cat) << x
+#define MCDEBUG(cat,x) CLOGX(DEBUG,cat) << x
+#define MCTRACE(cat,x) CLOGX(TRACE,cat) << x
+
+/*
 #define MCFATAL(cat,x) CLOG(FATAL,cat) << x
 #define MCERROR(cat,x) CLOG(ERROR,cat) << x
 #define MCWARNING(cat,x) CLOG(WARNING,cat) << x
 #define MCINFO(cat,x) CLOG(INFO,cat) << x
 #define MCDEBUG(cat,x) CLOG(DEBUG,cat) << x
 #define MCTRACE(cat,x) CLOG(TRACE,cat) << x
-#define MCLOG(level,cat,x) ELPP_WRITE_LOG(el::base::Writer, level, el::base::DispatchAction::NormalLog, cat) << x
+*/
+
+//#define MCLOG(level,cat,x) ELPP_WRITE_LOG(el::base::Writer, level, el::base::DispatchAction::NormalLog, cat) << x
+#define MCLOG(level,cat,x) ELPP_WRITE_LOG(el::base::Writer, level, \
+    (mlog_syslog)? el::base::DispatchAction::SysLog : el::base::DispatchAction::NormalLog \
+    , cat) << x
+/*
+#define MCLOG_O(level,cat,x) ELPP_WRITE_LOG(el::base::Writer, level, el::base::DispatchAction::NormalLog, cat) << x
+//#define MCLOG(level,cat,x) ((mlog_syslog)? CSYSLOG(level, el::base::DispatchAction::SysLog, cat) << x : MCLOG_O(level,cat,x))
+#define MCLOG(level,cat,x) ((mlog_syslog)? \
+    CSYSLOG(el::base::Writer, level, el::base::DispatchAction::SysLog, cat) << x \
+    : ELPP_WRITE_LOG(el::base::Writer, level, el::base::DispatchAction::NormalLog, cat) << x \
+    )
+*/
 #define MCLOG_FILE(level,cat,x) ELPP_WRITE_LOG(el::base::Writer, level, el::base::DispatchAction::FileOnlyLog, cat) << x
 
-#define MCLOG_COLOR(level,cat,color,x) MCLOG(level,cat,"\033[1;" color "m" << x << "\033[0m")
+//#define MCLOG_COLOR(level,cat,color,x) MCLOG(level,cat,"\033[1;" color "m" << x << "\033[0m")
+#define MCLOG_COLOR(level,cat,color,x) MCLOG(level,cat, ((mlog_syslog)? "" : "\033[1;" color "m") << x << ((mlog_syslog)? "" : "\033[0m"))
+/*
+#define MCLOG_COLOR_O(level,cat,color,x) MCLOG(level,cat,"\033[1;" color "m" << x << "\033[0m")
+#define MCLOG_COLOR(level,cat,color,x) ((mlog_syslog)? CSYSLOG(LEVEL,cat,x) : MCLOG_COLOR_O(level,cat,color,x))
+*/
+
 #define MCLOG_RED(level,cat,x) MCLOG_COLOR(level,cat,"31",x)
 #define MCLOG_GREEN(level,cat,x) MCLOG_COLOR(level,cat,"32",x)
 #define MCLOG_YELLOW(level,cat,x) MCLOG_COLOR(level,cat,"33",x)

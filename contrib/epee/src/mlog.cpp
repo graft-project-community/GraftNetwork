@@ -41,6 +41,14 @@
 
 thread_local std::string mlog_current_log_category;
 
+#ifndef ELPP_SYSLOG
+#error "ELPP_SYSLOG"
+#endif
+
+#ifdef ELPP_SYSLOG
+bool mlog_syslog = false;
+#endif
+
 using namespace epee;
 
 static std::string generate_log_filename(const char *base)
@@ -186,6 +194,9 @@ void mlog_set_log(const char *log)
   }
 }
 
+/*
+constexpr const char*  RELFILE = &__FILE__[sizeof(CMAKE_ROOT_SOURCE_DIR)];
+
 // %locname custom specifier can be used in addition to the Logging Format Specifiers of the Easylogging++
 // %locname similar to %loc but without full path
 //the default format is "%datetime{%Y-%M-%d %H:%m:%s.%g}	%thread	%level	%logger	%loc	%msg"
@@ -211,6 +222,33 @@ void mlog_set_format(const char* format)
     el::Configurations defaultConf;
     defaultConf.setGlobally(el::ConfigurationType::Format, format);
     el::Loggers::reconfigureAllLoggers(defaultConf);
+}
+*/
+
+// %rfile custom specifier can be used in addition to the Logging Format Specifiers of the Easylogging++
+// %rfile similar to %file but the path is relative to topmost CMakeLists.txt
+//the default format is "%datetime{%Y-%M-%d %H:%m:%s.%g}	%thread	%level	%logger	%loc	%msg"
+void mlog_set_format(const char* format)
+{
+    auto rfile = [](const el::LogMessage* lm)-> std::string
+    {
+        assert(sizeof(CMAKE_ROOT_SOURCE_DIR) < lm->file().size());
+        return lm->file().substr(sizeof(CMAKE_ROOT_SOURCE_DIR));
+    };
+    el::Helpers::installCustomFormatSpecifier(el::CustomFormatSpecifier("%rfile", rfile));
+/*
+    el::Configurations defaultConf;
+    defaultConf.setGlobally(el::ConfigurationType::Format, format);
+    el::Loggers::reconfigureAllLoggers(defaultConf);
+*/
+
+//    el::Loggers::reconfigureAllLoggers(el::ConfigurationType::Format, format);
+
+    el::Configurations defaultConf;
+    defaultConf.setToDefault();
+    defaultConf.setGlobally(el::ConfigurationType::Format, format);
+
+    el::Loggers::setDefaultConfigurations(defaultConf, true);
 }
 
 namespace epee
